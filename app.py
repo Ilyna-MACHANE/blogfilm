@@ -46,9 +46,5 @@ def get_films():
         app.logger.error(f"Erreur lors de la récupération des films : {e}")
         return f"Erreur : {e}"
 
-    finally:
-        if conn:
-            conn.close()
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)
