@@ -1,6 +1,6 @@
-import logging
 from flask import Flask, jsonify
 import pyodbc
+import logging
 
 app = Flask(__name__)
 
@@ -27,6 +27,9 @@ def get_films():
         cursor.execute('SELECT * FROM Films')
         rows = cursor.fetchall()
 
+        if not rows:
+            app.logger.debug("Aucun film trouvé dans la base de données.")
+        
         films = []
         for row in rows:
             films.append({
@@ -36,10 +39,11 @@ def get_films():
                 'year': row.release_year
             })
 
+        app.logger.debug(f"Films récupérés : {films}")
         return jsonify(films)
 
     except Exception as e:
-        app.logger.error(f"Erreur : {e}")
+        app.logger.error(f"Erreur lors de la récupération des films : {e}")
         return f"Erreur : {e}"
 
     finally:
