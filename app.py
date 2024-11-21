@@ -1,7 +1,11 @@
+import logging
 from flask import Flask, jsonify
 import pyodbc
 
 app = Flask(__name__)
+
+# Configuration des logs
+app.logger.setLevel(logging.DEBUG)
 
 # Configuration de la base de données Azure SQL
 server = 'blogfilm.database.windows.net'
@@ -17,6 +21,7 @@ def home():
 @app.route('/films')
 def get_films():
     try:
+        app.logger.debug("Tentative de connexion à la base de données...")
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM Films')
@@ -34,6 +39,7 @@ def get_films():
         return jsonify(films)
 
     except Exception as e:
+        app.logger.error(f"Erreur : {e}")
         return f"Erreur : {e}"
 
     finally:
