@@ -69,12 +69,16 @@ def upload_poster():
     blob_name = file.filename
 
     try:
+        # Assurez-vous que l'image est bien téléchargée en mode binaire
         blob_client = container_client.get_blob_client(blob_name)
-        blob_client.upload_blob(file)
+        
+        # Upload du fichier en mode binaire
+        blob_client.upload_blob(file.stream, overwrite=True)  # Utilisation de .stream pour télécharger le fichier
         return f"Fichier {blob_name} uploadé avec succès !"
     except Exception as e:
         app.logger.error(f"Erreur lors de l'upload du fichier : {e}")
         return f"Erreur lors de l'upload : {e}", 500
+
 
 
 
