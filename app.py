@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-import pyodbc
+import pymssql
 import logging
 
 app = Flask(__name__)
@@ -12,7 +12,6 @@ server = 'blogfilm.database.windows.net'
 database = 'blogfilms'
 username = 'ilyblog'
 password = 'azerty25!'
-conn_str = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
 
 @app.route('/')
 def home():
@@ -22,7 +21,7 @@ def home():
 def get_films():
     try:
         app.logger.debug("Tentative de connexion à la base de données...")
-        conn = pyodbc.connect(conn_str)
+        conn = pymssql.connect(server, username, password, database)
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM Films')
         rows = cursor.fetchall()
@@ -32,12 +31,14 @@ def get_films():
         
         films = []
         for row in rows:
-            films.append({
-                'id': row.film_id,
-                'title': row.title,
-                'genre': row.genre,
-                'year': row.release_year
-            })
+            films.append(
+                {
+                'id': row[0],
+                'title':  row[1],
+                'genre':  row[2],
+                'year':  row[3]
+                }
+            )
 
         app.logger.debug(f"Films récupérés : {films}")
         return jsonify(films)
