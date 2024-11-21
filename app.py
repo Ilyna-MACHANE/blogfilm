@@ -76,6 +76,9 @@ def upload_poster():
         app.logger.error(f"Erreur lors de l'upload du fichier : {e}")
         return f"Erreur lors de l'upload : {e}", 500
 
+
+
+
 @app.route('/poster/<blob_name>')
 def get_poster(blob_name):
     try:
