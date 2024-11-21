@@ -1,5 +1,6 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import pymssql
+from azure.storage.blob import BlobServiceClient
 import logging
 
 app = Flask(__name__)
@@ -46,6 +47,44 @@ def get_films():
     except Exception as e:
         app.logger.error(f"Erreur lors de la récupération des films : {e}")
         return f"Erreur : {e}"
+
+# Configuration Azure Blob Storage
+account_name = 'ton-nom-de-compte'  # Exemple : blogfilmstorage
+account_key = 'ta-clé-d’accès-principale'
+container_name = 'posters'
+
+# Créer le client Blob
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{account_name}.blob.core.windows.net",
+    credential=account_key
+)
+container_client = blob_service_client.get_container_client(container_name)
+
+@app.route('/upload', methods=['POST'])
+def upload_poster():
+    if 'file' not in request.files:
+        return "Aucun fichier trouvé", 400
+
+    file = request.files['file']
+    blob_name = file.filename
+
+    try:
+        blob_client = container_client.get_blob_client(blob_name)
+        blob_client.upload_blob(file)
+        return f"Fichier {blob_name} uploadé avec succès !"
+    except Exception as e:
+        app.logger.error(f"Erreur lors de l'upload du fichier : {e}")
+        return f"Erreur lors de l'upload : {e}", 500
+
+@app.route('/poster/<blob_name>')
+def get_poster(blob_name):
+    try:
+        blob_client = container_client.get_blob_client(blob_name)
+        url = blob_client.url
+        return jsonify({"url": url})
+    except Exception as e:
+        app.logger.error(f"Erreur lors de la récupération : {e}")
+        return f"Erreur lors de la récupération : {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)
