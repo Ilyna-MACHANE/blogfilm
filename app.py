@@ -105,7 +105,7 @@ def login():
 
     return render_template('login.html')
 
-@app.route('/logout')
+@app.route('/logout') 
 def logout():
     session.pop('user_id', None)  # Supprime l'utilisateur de la session
     return redirect(url_for('home'))
