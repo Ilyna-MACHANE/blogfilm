@@ -27,14 +27,17 @@ def home():
 
 @app.route('/films')
 def films():
-    # Vérifier si l'utilisateur est connecté avant d'afficher la page des films
     if 'user_id' not in session:
-        return redirect(url_for('login'))  # Si non connecté, rediriger vers la page de connexion
+        return redirect(url_for('login'))  # Si l'utilisateur n'est pas connecté, redirige vers la page de connexion
 
-    # Récupérer les films depuis la base de données
+    # Récupérer la liste des films avec les noms des utilisateurs
     conn = get_db_connection()
     cursor = conn.cursor(as_dict=True)
-    cursor.execute('SELECT * FROM Films')
+    cursor.execute('''
+        SELECT Films.film_id, Films.title, Films.genre, Films.release_year, Films.image_url, Films.user_id, Users.username
+        FROM Films
+        JOIN Users ON Films.user_id = Users.user_id
+    ''')
     films = cursor.fetchall()
     conn.close()
 
@@ -64,17 +67,19 @@ def upload():
             # URL de l'image uploadée
             image_url = blob_client.url
 
-            # Exemple de données pour le film
+            # Récupérer les données du formulaire
             title = request.form.get('title', 'Titre inconnu')
             genre = request.form.get('genre', 'Genre inconnu')
             release_year = request.form.get('release_year', '2024')  # Par défaut, l'année actuelle
+            user_id = session['user_id']  # ID de l'utilisateur connecté
 
+            # Insérer le film dans la base de données avec l'ID utilisateur
             cursor.execute(
                 '''
-                INSERT INTO Films (title, genre, release_year)
-                VALUES (%s, %s, %s)
+                INSERT INTO Films (title, genre, release_year, user_id, image_url)
+                VALUES (%s, %s, %s, %s, %s)
                 ''',
-                (title, genre, release_year)
+                (title, genre, release_year, user_id, image_url)
             )
             conn.commit()
             conn.close()
@@ -84,6 +89,31 @@ def upload():
             return f"Erreur : {e}", 500
 
     return render_template('upload.html')
+
+@app.route('/delete/<int:film_id>', methods=['POST'])
+def delete_film(film_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Redirige si non connecté
+
+    user_id = session['user_id']
+
+    # Vérifie si l'utilisateur est bien l'auteur du film
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_id FROM Films WHERE film_id = %s', (film_id,))
+    film = cursor.fetchone()
+
+    if not film or film[0] != user_id:
+        conn.close()
+        return "Non autorisé", 403  # Erreur : utilisateur non autorisé
+
+    # Supprime le film de la base de données
+    cursor.execute('DELETE FROM Films WHERE film_id = %s', (film_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('films'))  # Redirige vers la liste des films après suppression
+
 
 
 @app.route('/register', methods=['GET', 'POST'])

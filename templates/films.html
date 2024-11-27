@@ -13,9 +13,14 @@
         <ul>
             {% for film in films %}
             <li>
-                <strong>{{ film['title'] }}</strong> ({{ film['release_year'] }}) - Genre : {{ film['genre'] }}
-                <br>
-                <img src="{{ film['image_url'] }}" alt="Affiche de {{ film['title'] }}" style="max-width: 200px;">
+                <strong>{{ film['title'] }}</strong> ({{ film['release_year'] }}) - Genre : {{ film['genre'] }}<br>
+                Posté par : {{ film['username'] }}<br>
+                <img src="{{ film['image_url'] }}" alt="Affiche de {{ film['title'] }}" style="max-width: 200px;"><br>
+                {% if session['user_id'] == film['user_id'] %}
+                    <form action="/delete/{{ film['film_id'] }}" method="post" style="display: inline;">
+                        <button type="submit" style="color: red;">Supprimer</button>
+                    </form>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
