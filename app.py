@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request, render_template, redirect, url_for, session
 import pymssql
 import hashlib
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+from datetime import datetime, timedelta
 import logging
 
 app = Flask(__name__)
@@ -16,10 +17,32 @@ database = 'blogfilms'
 username = 'ilyblog'
 password = 'azerty25!'
 
+# Configuration Azure Blob Storage
+account_name = 'blogfilmstorage'
+account_key = 'ZYjgrt9jn8otGQHQLjCsQLLJvyuyH8jN9oyRj3qsKDjO+959l0GumABPJy7VVa4jIupYPQSX/2bs+AStQa2mZA=='
+container_name = 'posters'
+
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{account_name}.blob.core.windows.net",
+    credential=account_key
+)
+container_client = blob_service_client.get_container_client(container_name)
+
 # Connexion à la base de données SQL
 def get_db_connection():
     conn = pymssql.connect(server, username, password, database)
     return conn
+
+def generate_sas_url(blob_name):
+    sas_token = generate_blob_sas(
+        account_name=account_name,
+        container_name=container_name,
+        blob_name=blob_name,
+        account_key=account_key,
+        permission=BlobSasPermissions(read=True),
+        expiry=datetime.utcnow() + timedelta(days=30)  # Valable 30 jours
+    )
+    return f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
 
 @app.route('/')
 def home():
@@ -40,6 +63,11 @@ def films():
     ''')
     films = cursor.fetchall()
     conn.close()
+
+    # Générer des URL SAS pour chaque image
+    for film in films:
+        blob_name = film['image_url'].split('/')[-1]  # Nom du fichier
+        film['image_url'] = generate_sas_url(blob_name)
 
     return render_template('films.html', films=films)
 
@@ -114,8 +142,6 @@ def delete_film(film_id):
 
     return redirect(url_for('films'))  # Redirige vers la liste des films après suppression
 
-
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -169,27 +195,6 @@ def login():
 def logout():
     session.pop('user_id', None)  # Supprime l'utilisateur de la session
     return redirect(url_for('home'))
-
-# Configuration Azure Blob Storage
-account_name = 'blogfilmstorage'
-account_key = 'ZYjgrt9jn8otGQHQLjCsQLLJvyuyH8jN9oyRj3qsKDjO+959l0GumABPJy7VVa4jIupYPQSX/2bs+AStQa2mZA=='
-container_name = 'posters'
-
-blob_service_client = BlobServiceClient(
-    account_url=f"https://{account_name}.blob.core.windows.net",
-    credential=account_key
-)
-container_client = blob_service_client.get_container_client(container_name)
-
-@app.route('/poster/<blob_name>')
-def get_poster(blob_name):
-    try:
-        blob_client = container_client.get_blob_client(blob_name)
-        url = blob_client.url
-        return jsonify({"url": url})
-    except Exception as e:
-        app.logger.error(f"Erreur lors de la récupération : {e}")
-        return f"Erreur lors de la récupération : {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
