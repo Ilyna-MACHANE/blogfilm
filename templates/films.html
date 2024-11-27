@@ -4,27 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des Films</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header style="text-align: center; padding: 1rem; background-color: #4CAF50; color: white;">
-        <h1>Nos Films</h1>
+    <header>
+        <h1>Les Films</h1>
     </header>
-    <div style="max-width: 800px; margin: 2rem auto; font-family: Arial, sans-serif;">
+    <div class="container">
         <ul>
             {% for film in films %}
             <li>
                 <strong>{{ film['title'] }}</strong> ({{ film['release_year'] }}) - Genre : {{ film['genre'] }}<br>
                 Posté par : {{ film['username'] }}<br>
-                <img src="{{ film['image_url'] }}" alt="Affiche de {{ film['title'] }}" style="max-width: 200px;"><br>
+                <img src="{{ film['image_url'] }}" alt="Affiche de {{ film['title'] }}">
                 {% if session['user_id'] == film['user_id'] %}
-                    <form action="/delete/{{ film['film_id'] }}" method="post" style="display: inline;">
-                        <button type="submit" style="color: red;">Supprimer</button>
+                    <form action="/delete/{{ film['film_id'] }}" method="post">
+                        <button type="submit">Supprimer</button>
                     </form>
                 {% endif %}
             </li>
             {% endfor %}
         </ul>
-        <a href="/" style="text-decoration: none; color: #4CAF50;">Retour à l'accueil</a>
+        <a href="/">Retour à l'accueil</a>
     </div>
 </body>
 </html>

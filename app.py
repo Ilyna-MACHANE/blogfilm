@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template, redirect, url_for, session
+from flask import Flask, jsonify, request, render_template, redirect, url_for, session, flash
 import pymssql
 import hashlib
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
@@ -78,7 +78,8 @@ def upload():
 
     if request.method == 'POST':
         if 'file' not in request.files:
-            return "Aucun fichier trouvé", 400
+            flash("Aucun fichier trouvé.", "danger")
+            return redirect(url_for('upload'))
 
         file = request.files['file']
         blob_name = file.filename
@@ -112,7 +113,7 @@ def upload():
             conn.commit()
             conn.close()
 
-            return f"Fichier {blob_name} uploadé avec succès !"
+            return render_template('success.html', message="Film ajouté avec succès.")
         except Exception as e:
             return f"Erreur : {e}", 500
 
@@ -140,7 +141,7 @@ def delete_film(film_id):
     conn.commit()
     conn.close()
 
-    return redirect(url_for('films'))  # Redirige vers la liste des films après suppression
+    return render_template('success.html', message="Film supprimé avec succès.")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -157,7 +158,7 @@ def register():
         existing_user = cursor.fetchone()
 
         if existing_user:
-            return "Utilisateur déjà existant", 400
+            return render_template('success.html', message="Utilisateur déjà existant.")
         
         # Insérer le nouvel utilisateur dans la base de données
         cursor.execute('INSERT INTO Users (username, email, password) VALUES (%s, %s, %s)',
@@ -165,7 +166,7 @@ def register():
         conn.commit()
         conn.close()
 
-        return redirect(url_for('login'))  # Rediriger vers la page de connexion après l'inscription
+        return render_template('success.html', message="Compte créé avec succès. Connectez-vous pour continuer.")
     
     return render_template('register.html')
 
@@ -185,9 +186,9 @@ def login():
 
         if user:
             session['user_id'] = user[0]  # Stocke l'ID de l'utilisateur dans la session
-            return redirect(url_for('home'))
+            return render_template('success.html', message="Connexion réussie !")
         else:
-            return "Nom d'utilisateur ou mot de passe incorrect", 400
+            return render_template('success.html', message="Nom d'utilisateur ou mot de passe incorrect.")
 
     return render_template('login.html')
 
