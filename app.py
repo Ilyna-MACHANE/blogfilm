@@ -27,19 +27,24 @@ def home():
 
 @app.route('/films')
 def films():
-    # Récupérer la liste des films depuis la base de données
+    # Vérifier si l'utilisateur est connecté avant d'afficher la page des films
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Si non connecté, rediriger vers la page de connexion
+
+    # Récupérer les films depuis la base de données
     conn = get_db_connection()
     cursor = conn.cursor(as_dict=True)
     cursor.execute('SELECT * FROM Films')
     films = cursor.fetchall()
     conn.close()
+
     return render_template('films.html', films=films)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'user_id' not in session:
         return redirect(url_for('login'))  # Si l'utilisateur n'est pas connecté, redirige vers la page de connexion
-    
+
     if request.method == 'POST':
         if 'file' not in request.files:
             return "Aucun fichier trouvé", 400
@@ -48,13 +53,38 @@ def upload():
         blob_name = file.filename
 
         try:
+            # Upload du fichier dans Azure Blob Storage
             blob_client = container_client.get_blob_client(blob_name)
             blob_client.upload_blob(file.read(), overwrite=True)
-            return "Fichier uploadé avec succès !"
+
+            # Enregistrer le film dans la base de données
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # URL de l'image uploadée
+            image_url = blob_client.url
+
+            # Exemple de données pour le film
+            title = request.form.get('title', 'Titre inconnu')
+            genre = request.form.get('genre', 'Genre inconnu')
+            release_year = request.form.get('release_year', '2024')  # Par défaut, l'année actuelle
+
+            cursor.execute(
+                '''
+                INSERT INTO Films (title, genre, release_year)
+                VALUES (%s, %s, %s)
+                ''',
+                (title, genre, release_year)
+            )
+            conn.commit()
+            conn.close()
+
+            return f"Fichier {blob_name} uploadé avec succès !"
         except Exception as e:
             return f"Erreur : {e}", 500
 
     return render_template('upload.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
