@@ -96,3 +96,13 @@ form button:hover {
 .button:hover {
     background-color: #45a049;
 }
+/* Images des posters */
+ul li img {
+    width: 150px; /* Largeur fixe */
+    height: 225px; /* Hauteur proportionnelle */
+    object-fit: cover; /* S'assure que l'image est bien cadrée */
+    border-radius: 5px; /* Coins arrondis */
+    margin-right: 15px;
+    float: left; /* Aligne les posters à gauche */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre légère pour un effet élégant */
+}

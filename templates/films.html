@@ -13,15 +13,17 @@
     <div class="container">
         <ul>
             {% for film in films %}
-            <li>
-                <strong>{{ film['title'] }}</strong> ({{ film['release_year'] }}) - Genre : {{ film['genre'] }}<br>
-                Posté par : {{ film['username'] }}<br>
+            <li style="overflow: hidden; margin-bottom: 20px;"> <!-- Ajoute un conteneur propre -->
                 <img src="{{ film['image_url'] }}" alt="Affiche de {{ film['title'] }}">
-                {% if session['user_id'] == film['user_id'] %}
-                    <form action="/delete/{{ film['film_id'] }}" method="post">
-                        <button type="submit">Supprimer</button>
-                    </form>
-                {% endif %}
+                <div>
+                    <strong>{{ film['title'] }}</strong> ({{ film['release_year'] }}) - Genre : {{ film['genre'] }}<br>
+                    Posté par : {{ film['username'] }}<br>
+                    {% if session['user_id'] == film['user_id'] %}
+                        <form action="/delete/{{ film['film_id'] }}" method="post" style="display: inline;">
+                            <button type="submit" style="color: red;">Supprimer</button>
+                        </form>
+                    {% endif %}
+                </div>
             </li>
             {% endfor %}
         </ul>
