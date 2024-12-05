@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog de Films</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Blog Ily</h1>
+    </header>
+    <div class="container">
+        {% if 'user_id' in session %}
+        <p>Bienvenue, utilisateur connecté ! <a href="{{ url_for('logout') }}">Se déconnecter</a></p>
+        <nav>
+            <a href="/films">Voir les Films</a>
+            <a href="/upload">Publie ton film préféré</a>
+        </nav>
+        {% else %}
+        <p>Pas encore inscrit ? <a href="{{ url_for('register') }}">S'inscrire</a></p>
+        <p>Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
+        {% endif %}
+    </div>
+</body>
+</html>

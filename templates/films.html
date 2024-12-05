@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Films</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Les Films</h1>
+    </header>
+    <div class="container">
+        <ul>
+            {% for film in films %}
+            <li style="overflow: hidden; margin-bottom: 20px;"> <!-- Ajoute un conteneur propre -->
+                <img src="{{ film['image_url'] }}" alt="Affiche de {{ film['title'] }}">
+                <div>
+                    <strong>{{ film['title'] }}</strong> ({{ film['release_year'] }}) - Genre : {{ film['genre'] }}<br>
+                    Posté par : {{ film['username'] }}<br>
+                    {% if session['user_id'] == film['user_id'] %}
+                        <form action="/delete/{{ film['film_id'] }}" method="post" style="display: inline;">
+                            <button type="submit" style="color: red;">Supprimer</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <a href="/">Retour à l'accueil</a>
+    </div>
+</body>
+</html>
